@@ -10,16 +10,18 @@ public class CordinateLabeler : MonoBehaviour
 {
     [SerializeField] Color defaultColor = Color.white;
     [SerializeField] Color blockedColor = Color.gray;
+    [SerializeField] Color exploredColor = Color.yellow;
+    [SerializeField] Color pathColor = new Color(1f, 0.5f, 0f);
     TextMeshPro label;
     Vector2Int coordinates = new Vector2Int();
-    WayPoint wayPoint;
+    GridManager gridManager;
     
     void Awake() 
     {
+        gridManager = FindObjectOfType<GridManager>();
         label = GetComponent<TextMeshPro>();  
         label.enabled = false;
 
-        wayPoint = GetComponentInParent<WayPoint>();
         DisplayCoordinates();  
     }
 
@@ -47,13 +49,27 @@ public class CordinateLabeler : MonoBehaviour
 
     void colorLabeles()
     {
-        if(wayPoint.IsPlacable)
+        if(gridManager == null){ return;}
+
+        Node node = gridManager.getNode(coordinates);
+
+        if(node == null){ return; }
+
+        if(!node.isWalkable)
         {
-            label.color = defaultColor;
+            label.color = blockedColor;
+        }
+        else if(node.isPath)
+        {
+            label.color = pathColor;
+        }
+        else if(node.isExplored)
+        {
+            label.color = exploredColor;
         }
         else
         {
-            label.color = blockedColor;
+            label.color = defaultColor;
         }
     }
 
@@ -64,9 +80,12 @@ public class CordinateLabeler : MonoBehaviour
 
     void DisplayCoordinates()
     {
-        coordinates.x = Mathf.RoundToInt(transform.parent.position.x / UnityEditor.EditorSnapSettings.move.x);
-        coordinates.y = Mathf.RoundToInt(transform.parent.position.z / UnityEditor.EditorSnapSettings.move.z);
+        if(gridManager == null){ return; }
+
+        coordinates.x = Mathf.RoundToInt(transform.parent.position.x / gridManager.UnityGridSize);
+        coordinates.y = Mathf.RoundToInt(transform.parent.position.z / gridManager.UnityGridSize);
         
         label.text = coordinates.x + "," + coordinates.y;
+        // Debug.Log(label.text + " kkkkkkkkk");
     }
 }

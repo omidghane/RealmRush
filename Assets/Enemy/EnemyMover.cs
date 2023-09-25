@@ -5,91 +5,74 @@ using UnityEngine;
 
 [RequireComponent(typeof(Enemy))]
 public class EnemyMover : MonoBehaviour
-{
-    [SerializeField] List<WayPoint> path = new List<WayPoint>();
+{ 
     [SerializeField] [Range(0f, 5f)] float speed = 1f;
     [SerializeField] float difficultySpeed = 0.5f;
+    List<Node> path = new List<Node>();
     int pathSize;
     Enemy enemy;
+    GridManager gridManager;
+    PathFinder pathFinder;
   
     void OnEnable()
     {   
         speed += difficultySpeed;
-        findPath();
         returnToStart();
-        StartCoroutine(followPath());
+        recalculatePath(true);
     }
 
-    void Start()
+    void Awake()
     {
         enemy = GetComponent<Enemy>();
+        gridManager = FindObjectOfType<GridManager>();
+        pathFinder = FindObjectOfType<PathFinder>();
     }
 
     void returnToStart()
     {
-        transform.position = path[0].transform.position;
+        transform.position = gridManager.getPositionFromCoordinates(pathFinder.StartCoordinates);
     }
 
-    void findPath()
+    void recalculatePath(bool resetPath)
     {
-        path.Clear();
-
-        GameObject parent = GameObject.FindGameObjectWithTag("Path");
-        Transform[] parentArray = parent.GetComponentsInChildren<Transform>();
-        pathSize = parentArray.Length/3;
-        
-        List<WayPoint> addedPath;
-        foreach(Transform child in parent.transform)
+        Vector2Int coordinates = new Vector2Int();
+        if(resetPath)
         {
-            WayPoint wayPoint = child.GetComponent<WayPoint>();
-            if(wayPoint != null)
-            {
-
-                path.Add(wayPoint);
-            }
-            
+            coordinates = pathFinder.StartCoordinates;
+        }
+        else{
+            coordinates = gridManager.getCoordinatesFromPosition(transform.position);
         }
 
-        // foreach(Transform child in parent.transform)
-        // {
-
-        //     WayPoint wayPoint = child.GetComponent<WayPoint>();
-        //     if(wayPoint != null)
-        //     {
-        //         Vector3 currPosition = wayPoint.transform.position;
-        //         foreach(Transform nextChild in parent.transform)
-        //         {
-        //             if (Mathf.Abs(nextChild.transform.position.x - currPosition.x)==1)
-        //             {
-        //                 addedPath.Add(nextChild);
-        //                 path.Add(wayPoint);
-        //                 break;
-        //             }
-        //             else if(Mathf.Abs(nextChild.transform.position.y - currPosition.y)==1)
-        //             {
-        //                 path.Add(wayPoint);
-        //                 break;
-        //             }
-        //         }
-        //     }
-        // }
-
+        StopAllCoroutines();
+        path.Clear();
+        path = pathFinder.getNewPath(coordinates);
+        StartCoroutine(followPath());
     }
 
-    void finisPath()
+    void finishPath()
     {
         enemy.StealGold();
         gameObject.SetActive(false);
     }
 
+    // void finishPath(bool gameEnd)
+    // {
+    //     if(!gameEnd){
+    //         enemy.StealGold();
+    //     }
+    //     gameObject.SetActive(false);
+    // }
+
     IEnumerator followPath()
     {
         // Debug.Log("path Length :"+path.Count);
-        for(int i = 0; i<path.Count ;i++)
+        for(int i = 1; i<path.Count ;i++)
         {
-            WayPoint wayPoint = path[i];
+            // Tile wayPoint = path[i];
             Vector3 startPosition = transform.position;
-            Vector3 endPosition = wayPoint.transform.position;
+            Vector3 endPosition = gridManager.getPositionFromCoordinates(path[i].coordinates);
+            
             float travelPercent = 0f;
             
             transform.LookAt( endPosition);
@@ -103,7 +86,7 @@ public class EnemyMover : MonoBehaviour
             
         }
         
-        finisPath();
+        finishPath();
     }
 
 }

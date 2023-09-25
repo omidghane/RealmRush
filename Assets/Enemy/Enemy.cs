@@ -5,8 +5,13 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [SerializeField] int goldReward = 25;
+    public void SetGoldReward(int value) { goldReward+=value; }
+    public int GoldReward{ get{ return goldReward; } }
+
     [SerializeField] int goldPenality = 25;
+    [SerializeField] int enemyDieToEnd = 20;
     Bank bank;
+    bool gameIsFinished = false;
 
     void Start() 
     {
@@ -24,4 +29,15 @@ public class Enemy : MonoBehaviour
         if(bank == null) { return; }
         bank.withdraw(goldPenality);
     }
+
+    public void checkWin()
+    {
+        bank.enemyDiedNumber += 1;
+        Debug.Log(bank.enemyDiedNumber+ " dies number");
+        if(bank.enemyDiedNumber > enemyDieToEnd)
+        {
+            bank.win();
+        }
+    }
+
 }
